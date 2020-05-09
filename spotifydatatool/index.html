@@ -124,22 +124,18 @@
           
           alert('There was an error during the authentication');
         } else {
-          //console.log(state);
-          //console.log(access_token)
-          //console.log(localStorage.getItem(stateKey))
+          
           localStorage.removeItem(stateKey);
           if (access_token) {
              $.ajax({
                 url: 'https://api.spotify.com/v1/search?query=year%3A0000-9999&type=artist&market=US&limit=50',
-                //https://api.spotify.com/v1/search?q=year%3A2001&type=artist
-               // https://api.spotify.com/v1/search?q=year:0000-9999&type=artist ---->working!!!
                 
                 headers: {
                   'Authorization': 'Bearer ' + access_token
                 },
                 success: function(response) {
                   //userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-                  console.log(response)
+                  
                   return response;
 
                  // $('#login').hide();
@@ -153,104 +149,48 @@
             */
 
             const render = data => { 
-               //d3.select("mySvg").append("g")
-               
-              //console.log(data['artists'].items)
-               /* for( key in data) {
-                 console.log(key)
-                  console.log((data[key].items).map(d=>d.name))
-                  //i += 1
-               }  */
-               //var width = 1200
-               //var height = 800
-               
-               //from here -------->
-               /*function playPause() {
-                                if (playing) {
-                                  const song = document.querySelector('#'+d.name +"audio"),
-                                  thumbnail = document.querySelector('#image'+ d.name);
-                                  thumbnail.style.transform = "scale(1.15)"; //this will slightly zoom in the album cover for a cool effect
-                                  song.play(); //this will play the audio track
-                                  playing = false;
-                                } else {
-                                 
-                                  thumbnail.style.transform = "scale(1)" //this will slightly zoom in the album cover for a cool effect
-                              
-                                  song.pause();
-                                  playing = true;
-                                }
-                 }*/
-              
-               //var nestedData = d3.nest().key(function(d,i) { return console.log(d) }).entries(myData)
+              //Setting up the size of the SVG object
                var margin = {top: 20, right: 20, bottom: 30, left: 40},
                    width = 800 - margin.left - margin.right,
                    height = 400 - margin.top - margin.bottom;
 
+                const adj = 30;
+              
+              //Setting up the x-axis
                var x  = d3.scaleBand().rangeRound([0, width], .5);
-               //var x1  = d3.scaleBand();
-               var y   = d3.scaleLinear().domain([0, d3.max(data['artists'].items, d => d3.max(d.followers.total))]).nice().rangeRound([height, 0]);
-               
-              // xAxis = g => g
-    //.attr("transform", `translate(0,${height - margin.bottom})`)
-    //.call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
-
-    const adj = 30;
-
                var xAxis = d3.axisBottom().scale(x)
+               x.domain((data['artists'].items).map(d=>d.name))
 
-                                //.tickValues(myData);
-    
-                                
+               //Setting up the y-axis
+               var y   = d3.scaleLinear().domain([0, d3.max(data['artists'].items, d => d3.max(d.followers.total))]).nice().rangeRound([height, 0]);
                var yAxis = d3.axisLeft().scale(y);
+               y.domain([0,d3.max(data['artists'].items, function(d) { return d.followers.total })])
+               
+              const color = d3.scaleOrdinal(d3.schemeCategory10);
+              var cScale = d3.scaleOrdinal().domain(d=> d).range(d3.schemeCategory10);
 
-               const color = d3.scaleOrdinal(d3.schemeCategory10);
 
+              //Creating the svg object
                var svg = d3.select("#mySvg")
                .attr("viewBox", "-" 
-            + adj + " -"
-            + adj + " " 
-            + (width  +adj *5) + " " 
-            + (height +adj *5))
-        .attr("overflow","visible").attr("overflow","visible")
+               + adj + " -"
+               + adj + " " 
+               + (width  +adj *5) + " " 
+               + (height +adj *5))
+               .attr("overflow","visible").attr("overflow","visible")
                           .append('g').attr('transform', 'translate(' +  margin.left + ',' +  margin.top+ ')');
 
-            // Define the div for the tooltip
-       //var tooltipDiv = svg.append("div")	
-                  //.attr("class", "tooltip")				
-                  //.style("opacity", 0)
-                  //.style("position", "absolute")
-                  //.style("z-index", "10");
-
-                  const tooltipDiv = svg.append("g")
+            
+                //creating the tooptip for mouseover events
+                const tooltipDiv = svg.append("g")
   
-  //dot.append("circle")
-      //.attr("r", 2.5);
+                tooltipDiv.append("text")
+                          .attr("font-family", "sans-serif")
+                          .attr("font-size", 10)
+                          .attr("text-anchor", "middle")
+                          .attr("y", -8);
 
-      tooltipDiv.append("text")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", 10)
-                .attr("text-anchor", "middle")
-                .attr("y", -8);
-
-
-                const audioPlayer = svg.append("g")
-
-                const button = svg.append("g")
-
-                
-                            
-         
-                //var categoriesNames = myData.map(function(d,i) { return console.log(d); });
-                //var histogram = d3.histogram()
-    //.value(function(d) { return d.name; })
-    //.domain(x.domain())
-               // var bins = histogram((data['artists'].items))
-                //console.log(bins)
-                var cScale = d3.scaleOrdinal().domain(d=> d).range(d3.schemeCategory10);
-
-                x.domain((data['artists'].items).map(d=>d.name))
-                y.domain([0,d3.max(data['artists'].items, function(d) { return d.followers.total })])
-
+                //adding x-axis to the svg element
                 svg.append("g").attr("class", "axis axis--x").attr("transform", "translate(0," + height + ")")
                    .call(xAxis).selectAll("text") 
                    .style("text-anchor", "end")
@@ -259,14 +199,15 @@
                    .attr("transform", function(d) {
                             return "rotate(-65)" 
                    });
-
+                //adding y-axis to the svg element
                 svg.append("g").attr("class", "axis axis--y").call(d3.axisLeft(y)).append("text").attr("transform", "rotate(-90)")
                    .attr("y", 6)
                    .attr("dy", "0.71em")
                    .attr("text-anchor", "end")
                    .text("Popularity");
-
-                   svg.append("text")
+                
+                //adding the label on the y axis
+                svg.append("text")
                       .attr("x", -(250/2)-40)
                       .attr("y", -25)
                       .attr("transform","rotate(-90)")
@@ -276,7 +217,8 @@
                       .attr("font-size", 15)
                       .attr("font-weight", "bold")
 
-                    svg.append("text")
+                //adding a label on the x axis
+                svg.append("text")
                         .attr("x", 700/2 + 50)
                         .attr("y", 435)
                         .attr("text-anchor", "middle")
@@ -285,8 +227,8 @@
                         .attr("font-size", 15)
                         .attr("font-weight", "bold")
                         
-
-                    svg.append("text")
+                //adding a title to the plot
+                svg.append("text")
                         .attr("x", 700/2 + 50)
                         .attr("y", -10)
                         .attr("text-anchor", "middle")
@@ -294,25 +236,21 @@
                         .style('fill', 'red')
                         .attr("font-size", 15)
                         .attr("font-weight", "bold")
-                  
-                   var node = svg.selectAll("g.node")
+
+                //adding images to the plot  
+                var node = svg.selectAll("g.node")
                               .data(data['artists'].items, function(d) { return d.name; })
 
                    var config = {
                       "avatar_size" : 48
                     }
 
-                    
+                var nodeEnter = node.enter()
+                                    .append("svg:g")
+                                    .attr("class", "node")
 
-                
-                             
-
-                  var nodeEnter = node.enter()
-                                       .append("svg:g")
-                                       .attr("class", "node")
-
-                   var defs = nodeEnter.append("defs")
-                       defs.append('pattern')
+                var defs = nodeEnter.append("defs")
+                           defs.append('pattern')
                               .attr("id", function(d) { return "image"+ d.name;}  )
                               .attr("width", function(d) { return (d.images[2]).width;})
                               .attr("height", function(d) { return (d.images[2]).height;})
@@ -330,24 +268,22 @@
                               //.attr("onclick", "playPause()")
                               .on("mousemove", function(d) {
                                 //d3.select("text").text(d.name)
-                                d3.select("text").text(d.popularity)
-                                var selectthegraphs = $('image').not(this);
+                                      d3.select("text").text(d.popularity)
+                                      var selectthegraphs = $('image').not(this);
 
-                                d3.selectAll(selectthegraphs)
-                                  .style("opacity",0);
+                                      d3.selectAll(selectthegraphs)
+                                        .style("opacity",0);
 
-                                
-
-                                  tooltipDiv.select("text")	
-                                   .style("opacity", .9)
-                                   .attr("id", "mytext")	
-                                   .attr("x", x(d.name))
-                                   .attr("y", y(d.followers.total))
-                                   .style("fill","brown")
-                                   .attr("font-size", 12)
-                                   .attr("font-weight", "bold")
-                                   .attr("font-family", "sans-serif")
-                                   .text("Followers: ("+ d.followers.total + ") "  + " Name: (" +d.name+ ") Popularity: ("+d.popularity+")")
+                                      tooltipDiv.select("text")	
+                                        .style("opacity", .9)
+                                        .attr("id", "mytext")	
+                                        .attr("x", x(d.name))
+                                        .attr("y", y(d.followers.total))
+                                        .style("fill","brown")
+                                        .attr("font-size", 12)
+                                        .attr("font-weight", "bold")
+                                        .attr("font-family", "sans-serif")
+                                        .text("Followers: ("+ d.followers.total + ") "  + " Name: (" +d.name+ ") Popularity: ("+d.popularity+")")
                               })
                               .on("mouseout", function(d){
                                       var selectthegraphs = $('image')
